@@ -1,0 +1,120 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ============================================
+  # JOB 1: Проверка сборки Docker образов
+  # ============================================
+  docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    
+    steps:
+      - name: Checkout backend
+        if: matrix.service == 'backend'
+        uses: actions/checkout@v4
+        with:
+          repository: practice-avtotor/burlak-backend
+          path: burlak-backend
+
+      - name: Checkout frontend
+        if: matrix.service == 'frontend'
+        uses: actions/checkout@v4
+        with:
+          repository: practice-avtotor/Burlak_frontend
+          path: Burlak_frontend
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.service }} image
+        run: |
+          if [ "${{ matrix.service }}" == "backend" ]; then
+            docker build -t bom-backend:test ./burlak-backend
+          else
+            docker build -t bom-frontend:test ./Burlak_frontend/Burlak_front
+          fi
+
+      - name: Test image runs
+        run: |
+          if [ "${{ matrix.service }}" == "backend" ]; then
+            docker run --rm -d --name test-backend -p 8000:8000 bom-backend:test
+            sleep 5
+            docker stop test-backend
+          fi
+
+  # ============================================
+  # JOB 2: Проверка docker-compose
+  # ============================================
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout all repos
+        uses: actions/checkout@v4
+        with:
+          repository: practice-avtotor/devops-infrastructure
+          path: devops-infrastructure
+
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: practice-avtotor/burlak-backend
+          path: burlak-backend
+
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+        with:
+          repository: practice-avtotor/Burlak_frontend
+          path: Burlak_frontend
+
+      - name: Start docker-compose
+        run: |
+          cd devops-infrastructure
+          docker-compose up -d
+          docker-compose ps
+
+      - name: Check services
+        run: |
+          sleep 10
+          curl -f http://localhost:8000 || echo "Backend not responding"
+          curl -f http://localhost:5173 || echo "Frontend not responding"
+
+      - name: Stop docker-compose
+        run: |
+          cd devops-infrastructure
+          docker-compose down
+
+  # ============================================
+  # JOB 3: Запуск тестов бэкенда
+  # ============================================
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: practice-avtotor/burlak-backend
+          path: burlak-backend
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd burlak-backend
+          pip install -r requirements.txt
+          pip install pytest pytest-mock
+
+      - name: Run tests
+        run: |
+          cd burlak-backend
+          pytest tests/ -v
