@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============================================
   # Redis — брокер сообщений для Celery
@@ -30,11 +28,11 @@ services:
       - "8000:8000"
     environment:
       REDIS_URL: redis://redis:6379/0
-      SQLITE_DB_PATH: /app/data/tasks.db
-      STORAGE_PATH: /app/storage
+      DB_URL: /data/jobs.db
+      STORAGE_PATH: /data
     volumes:
-      - shared_storage:/app/storage
-      - sqlite_data:/app/data
+      - shared_storage:/data
+      - sqlite_data:/data
       - ../burlak-backend:/app
     depends_on:
       redis:
@@ -46,26 +44,26 @@ services:
   # ============================================
   # Celery Worker — бизнес-логика (парсинг, сверка)
   # ============================================
-#  celery-worker:
-#    build:
-#     context: ../burlak-backend
-#      dockerfile: Dockerfile
-#    container_name: bom-celery-worker
-#    command: celery -A app.tasks worker --loglevel=info --concurrency=4
-#    environment:
-#      REDIS_URL: redis://redis:6379/0
-#      SQLITE_DB_PATH: /app/data/tasks.db
-#      STORAGE_PATH: /app/storage
-#    volumes:
-#      - shared_storage:/app/storage
-#      - sqlite_data:/app/data
-#      - ../burlak-backend:/app
-#    depends_on:
-#      redis:
-#        condition: service_healthy
-#    networks:
-#      - bom-network
-#    restart: unless-stopped
+  # celery-worker:
+  #   build:
+  #     context: ../burlak-backend
+  #     dockerfile: Dockerfile
+  #   container_name: bom-celery-worker
+  #   command: celery -A app.tasks worker --loglevel=info --concurrency=4
+  #   environment:
+  #     REDIS_URL: redis://redis:6379/0
+  #     DB_URL: /data/jobs.db
+  #     STORAGE_PATH: /data
+  #   volumes:
+  #     - shared_storage:/data
+  #     - sqlite_data:/data
+  #     - ../burlak-backend:/app
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - bom-network
+  #   restart: unless-stopped
 
   # ============================================
   # Frontend (Vue 3 + Vite)
