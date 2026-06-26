@@ -148,3 +148,4 @@ jobs:
           sleep 5
           curl -f http://localhost:8000/health || (docker logs test-backend && exit 1)
           docker stop test-backend
+
