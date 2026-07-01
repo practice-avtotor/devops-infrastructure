@@ -30,6 +30,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       DB_URL: /data/jobs.db
       STORAGE_PATH: /data
+      ML_API_URL: http://ml-mock:5000
     volumes:
       - shared_storage:/data
       - sqlite_data:/data
@@ -44,33 +45,48 @@ services:
   # ============================================
   # Celery Worker — бизнес-логика (парсинг, сверка)
   # ============================================
-  # celery-worker:
-  #   build:
-  #     context: ../burlak-backend
-  #     dockerfile: Dockerfile
-  #   container_name: bom-celery-worker
-  #   command: celery -A app.tasks worker --loglevel=info --concurrency=4
-  #   environment:
-  #     REDIS_URL: redis://redis:6379/0
-  #     DB_URL: /data/jobs.db
-  #     STORAGE_PATH: /data
-  #   volumes:
-  #     - shared_storage:/data
-  #     - sqlite_data:/data
-  #     - ../burlak-backend:/app
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - bom-network
-  #   restart: unless-stopped
+  celery-worker:
+    build:
+      context: ../burlak-backend
+      dockerfile: Dockerfile
+    container_name: bom-celery-worker
+    command: /app/.venv/bin/python -m celery -A app.worker.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DB_URL: /data/jobs.db
+      STORAGE_PATH: /data
+      ML_API_URL: http://ml-mock:5000
+    volumes:
+      - shared_storage:/data
+      - sqlite_data:/data
+      - ../burlak-backend:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - bom-network
+    restart: unless-stopped
+
+  # ============================================
+  # ML Mock — эмуляция AI-сервиса для локальной разработки
+  # ============================================
+  ml-mock:
+    build:
+      context: ./ml-mock
+      dockerfile: Dockerfile
+    container_name: bom-ml-mock
+    ports:
+      - "5000:5000"
+    networks:
+      - bom-network
+    restart: unless-stopped
 
   # ============================================
   # Frontend (Vue 3 + Vite)
   # ============================================
   frontend:
     build:
-      context: ../Burlak_frontend/Burlak_front
+      context: ../Burlak_frontend
       dockerfile: Dockerfile
     container_name: bom-frontend
     ports:
