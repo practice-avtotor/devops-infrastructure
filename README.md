@@ -47,15 +47,16 @@ git clone https://github.com/practice-avtotor/devops-infrastructure.git
 cd devops-infrastructure
 ```
 
-### 2. Настройка переменных окружения
+### 2. Настройка переменных окружения и локальных переопределений
 
-Скопируйте пример конфигурации:
+Скопируйте примеры конфигурации:
 
 ```bash
 cp .env.example .env
+cp docker-compose.override.yml.example docker-compose.override.yml
 ```
 
-При необходимости отредактируйте `.env` под свои нужды.
+При необходимости отредактируйте `.env` и `docker-compose.override.yml` под свои нужды.
 
 ### 3. Сборка и запуск всех сервисов
 
