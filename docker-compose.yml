@@ -50,7 +50,7 @@ services:
       context: ../burlak-backend
       dockerfile: Dockerfile
     container_name: bom-celery-worker
-    command: /app/.venv/bin/python -m celery -A app.tasks worker --loglevel=info --concurrency=4
+    command: /app/.venv/bin/python -m celery -A app.worker.celery_app worker --loglevel=info --concurrency=4
     environment:
       REDIS_URL: redis://redis:6379/0
       DB_URL: /data/jobs.db
@@ -86,7 +86,7 @@ services:
   # ============================================
   frontend:
     build:
-      context: ../Burlak_frontend/Burlak_front
+      context: ../Burlak_frontend
       dockerfile: Dockerfile
     container_name: bom-frontend
     ports:
