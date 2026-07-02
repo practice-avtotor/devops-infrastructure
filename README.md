@@ -68,32 +68,50 @@ docker compose up --build
 
 ### 4. Проверка работы
 
-Откройте в браузере:
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:8000/docs (Swagger)
-- **Backend:** http://localhost:8000/
+В зависимости от того, используете ли вы локальные переопределения (`docker-compose.override.yml`), доступ к сервисам осуществляется по-разному.
+
+#### Вариант А: Локальная разработка (с `docker-compose.override.yml`)
+* **Frontend:** http://localhost:5173
+* **Backend API (Swagger):** http://localhost:8000/docs
+* **Nginx Reverse Proxy:** http://localhost (проксирует запросы)
+
+#### Вариант Б: Стандартный запуск (без `docker-compose.override.yml`)
+* **Вся система (через Nginx):** http://localhost (порт 80)
+* **Backend API (через Nginx):** http://localhost/api/v1/docs
 
 ---
 
 ## Доступ к сервисам
 
-| Сервис | Порт | URL | Логин/Пароль |
-|--------|------|-----|--------------|
-| **Frontend** | 5173 | http://localhost:5173 | — |
-| **Backend API** | 8000 | http://localhost:8000/docs | — |
-| **Redis** | 6379 | `redis://localhost:6379` | — |
+### При локальной разработке (с override)
+| Сервис | Внутренний порт | Внешний порт | URL |
+|--------|-----------------|--------------|-----|
+| **Nginx (Proxy)** | 80 | 80 | http://localhost |
+| **Frontend** | 5173 | 5173 | http://localhost:5173 |
+| **Backend API** | 8000 | 8000 | http://localhost:8000/docs |
+| **Redis** | 6379 | 6379 | `redis://localhost:6379` |
+
+### При стандартном запуске (без override)
+| Сервис | Внутренний порт | Внешний порт | URL |
+|--------|-----------------|--------------|-----|
+| **Nginx (Proxy)** | 80 | 80 | http://localhost |
+| **Frontend** | 5173 | Не экспортируется | Доступен через Nginx (http://localhost) |
+| **Backend API** | 8000 | Не экспортируется | Доступен через Nginx (http://localhost/api/v1/docs) |
+| **Redis** | 6379 | Не экспортируется | Доступен только внутри сети `bom-network` |
 
 ---
 
 ## Переменные окружения
 
-Файл `.env` содержит следующие переменные:
+Файл `.env` содержит следующие переменные (шаблон в `.env.example`):
 
 | Переменная | Описание | Значение по умолчанию |
 |------------|----------|----------------------|
 | `REDIS_URL` | Адрес для подключения к Redis | `redis://redis:6379/0` |
-| `SQLITE_DB_PATH` | Путь к файлу SQLite базы данных | `/app/data/tasks.db` |
-| `STORAGE_PATH` | Путь для хранения загруженных файлов | `/app/storage` |
+| `DB_URL` | Путь к файлу SQLite базы данных внутри контейнера | `/data/jobs.db` |
+| `STORAGE_PATH` | Путь для хранения загруженных файлов внутри контейнера | `/data` |
+| `BACKEND_PORT` | Внутренний порт бэкенда | `8000` |
+| `FRONTEND_PORT` | Внутренний порт фронтенда | `5173` |
 
 ---
 
