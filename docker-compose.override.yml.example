@@ -1,0 +1,30 @@
+# =====================================================================
+# Local Development Overrides (Template)
+# 
+# Copy this file to docker-compose.override.yml to enable local development
+# features like exposing internal ports and mounting local source code:
+#
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+# =====================================================================
+services:
+  # Expose Redis port for local inspection/debugging
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Mount local source code for backend development and expose port
+  backend:
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../burlak-backend:/app
+
+  # Mount local source code for Celery worker development
+  celery-worker:
+    volumes:
+      - ../burlak-backend:/app
+
+  # Expose frontend port for direct access
+  frontend:
+    ports:
+      - "5173:5173"
